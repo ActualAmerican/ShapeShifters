@@ -1,174 +1,171 @@
-// Canvas setup
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+ // main.js
 
-// Shape data structure
+// Retrieve the canvas element and set up the context
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Set canvas dimensions
+canvas.width = 800;
+canvas.height = 600;
+
+// Define the list of shapes and their properties
 const shapes = [
-  { name: "Circle", render: renderCircle, unlocked: true },
-  { name: "Heart", render: renderHeart, unlocked: true },
-  { name: "Triangle", render: renderTriangle, unlocked: true },
-  { name: "Square", render: renderSquare, unlocked: true },
-  { name: "Kite", render: renderKite, unlocked: true },
-  { name: "Trapezoid", render: renderTrapezoid, unlocked: true },
-  { name: "Crescent Moon", render: renderCrescentMoon, unlocked: true },
-  { name: "Pentagon", render: renderPentagon, unlocked: true },
-  { name: "Octagon", render: renderOctagon, unlocked: true },
-  { name: "Arrow", render: renderArrow, unlocked: true },
-  { name: "Snowflake", render: renderSnowflake, unlocked: false },
-  { name: "Butterfly", render: renderButterfly, unlocked: false },
-  { name: "Feather", render: renderFeather, unlocked: false },
-  { name: "Hourglass", render: renderHourglass, unlocked: false },
-  { name: "Angel", render: renderAngel, unlocked: false },
+  { name: 'circle', color: '#0000FF' }, // Blue
+  { name: 'triangle', color: '#00F7C1' }, // Electric teal
+  { name: 'square', color: '#228B22' }, // Light forest green
+  { name: 'pentagon', color: '#2E8B57' }, // Sea foam green
+  { name: 'octagon', color: '#800000' }, // Maroon
+  { name: 'heart', color: '#FF0000' }, // Red
+  { name: 'kite', color: '#191970' }, // Midnight blue/purple
+  { name: 'trapezoid', color: '#FFA500' }, // Orange
+  { name: 'crescentMoon', color: '#FFFF00' }, // Yellow
+  { name: 'arrow', color: '#FF91A4' }, // Salmon pink
 ];
 
-// Array to track shape indices
-let defaultShapeIndices = shapes
-  .map((shape, index) => (shape.unlocked ? index : null))
-  .filter(index => index !== null);
+// Initialize the current shape index
+let currentShapeIndex = 0;
 
-let currentShapeIndex = 0; // Tracks the current shape
+// Function to draw the current shape centered on the canvas
+function drawShape(shapeData) {
+  const { name, color } = shapeData;
 
-// Utility to shuffle an array
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+  // Clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Set the fill color
+  ctx.fillStyle = color;
+
+  // Calculate the center of the canvas
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  // Draw the specified shape
+  switch (name) {
+    case 'circle':
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'triangle':
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - 80);
+      ctx.lineTo(centerX - 70, centerY + 50);
+      ctx.lineTo(centerX + 70, centerY + 50);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'square':
+      ctx.fillRect(centerX - 60, centerY - 60, 120, 120);
+      break;
+    case 'pentagon':
+      drawPolygon(centerX, centerY, 5, 70);
+      break;
+    case 'octagon':
+      drawPolygon(centerX, centerY, 8, 60);
+      break;
+    case 'heart':
+      drawHeart(centerX, centerY);
+      break;
+    case 'kite':
+      drawKite(centerX, centerY);
+      break;
+    case 'trapezoid':
+      drawTrapezoid(centerX, centerY);
+      break;
+    case 'crescentMoon':
+      drawCrescentMoon(centerX, centerY);
+      break;
+    case 'arrow':
+      drawArrow(centerX, centerY);
+      break;
+    default:
+      console.error('Unknown shape:', name);
   }
 }
 
-// Shuffle the default shapes at the start
-shuffleArray(defaultShapeIndices);
-
-// Renders a Circle
-function renderCircle(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+// Function to draw a regular polygon
+function drawPolygon(x, y, sides, radius) {
+  const angle = (2 * Math.PI) / sides;
   ctx.beginPath();
-  ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, 2 * Math.PI);
-  ctx.fillStyle = "#00f7c1";
-  ctx.fill();
-}
-
-// Renders a Triangle
-function renderTriangle(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-  ctx.beginPath();
-  ctx.moveTo(canvas.width / 2, canvas.height / 2 - 50);
-  ctx.lineTo(canvas.width / 2 - 50, canvas.height / 2 + 50);
-  ctx.lineTo(canvas.width / 2 + 50, canvas.height / 2 + 50);
+  for (let i = 0; i < sides; i++) {
+    const dx = x + radius * Math.cos(i * angle - Math.PI / 2);
+    const dy = y + radius * Math.sin(i * angle - Math.PI / 2);
+    if (i === 0) {
+      ctx.moveTo(dx, dy);
+    } else {
+      ctx.lineTo(dx, dy);
+    }
+  }
   ctx.closePath();
-  ctx.fillStyle = "#00f7c1";
   ctx.fill();
 }
 
-// Placeholder render functions for other shapes
-function renderHeart(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Heart placeholder", canvas.width / 2 - 50, canvas.height / 2);
+// Function to draw a heart shape
+function drawHeart(x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + 40);
+  ctx.bezierCurveTo(x + 120, y, x + 55, y - 110, x, y - 50);
+  ctx.bezierCurveTo(x - 55, y - 110, x - 120, y, x, y + 40);
+  ctx.closePath();
+  ctx.fill();
 }
 
-function renderSquare(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Square placeholder", canvas.width / 2 - 50, canvas.height / 2);
+// Function to draw a crescent moon shape (adjusted for more open crescent)
+function drawCrescentMoon(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 60, 0, Math.PI * 2, false); // Outer arc
+  ctx.fillStyle = '#FFFF00';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + 20, y, 45, 0, Math.PI * 2, true); // Inner arc moved outward to keep crescent open
+  ctx.fillStyle = '#ffffff'; // Match background for crescent effect
+  ctx.fill();
 }
 
-function renderKite(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Kite placeholder", canvas.width / 2 - 50, canvas.height / 2);
+// Function to draw a kite shape (adjusted middle points)
+function drawKite(x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - 90); // Top point
+  ctx.lineTo(x - 50, y - 20); // Adjusted left middle point closer to top
+  ctx.lineTo(x, y + 110); // Bottom point
+  ctx.lineTo(x + 50, y - 20); // Adjusted right middle point closer to top
+  ctx.closePath();
+  ctx.fill();
 }
 
-function renderTrapezoid(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Trapezoid placeholder", canvas.width / 2 - 50, canvas.height / 2);
+// Function to draw a trapezoid shape
+function drawTrapezoid(x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x - 80, y + 50);
+  ctx.lineTo(x - 60, y - 50);
+  ctx.lineTo(x + 60, y - 50);
+  ctx.lineTo(x + 80, y + 50);
+  ctx.closePath();
+  ctx.fill();
 }
 
-function renderCrescentMoon(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Crescent Moon placeholder", canvas.width / 2 - 50, canvas.height / 2);
+// Function to draw an arrow shape
+function drawArrow(x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - 100);
+  ctx.lineTo(x - 40, y - 40);
+  ctx.lineTo(x - 20, y - 40);
+  ctx.lineTo(x - 20, y + 40);
+  ctx.lineTo(x + 20, y + 40);
+  ctx.lineTo(x + 20, y - 40);
+  ctx.lineTo(x + 40, y - 40);
+  ctx.closePath();
+  ctx.fill();
 }
 
-function renderPentagon(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Pentagon placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderOctagon(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Octagon placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderArrow(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Arrow placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderSnowflake(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Snowflake placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderButterfly(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Butterfly placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderFeather(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Feather placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderHourglass(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Hourglass placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-function renderAngel(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "white";
-  ctx.fillText("Angel placeholder", canvas.width / 2 - 50, canvas.height / 2);
-}
-
-// Cycles through shapes
+// Function to cycle to the next shape
 function cycleShapes() {
-  if (currentShapeIndex >= defaultShapeIndices.length) {
-    shuffleArray(defaultShapeIndices); // Reshuffle after all shapes are shown
-    currentShapeIndex = 0;
-
-    // Include unlocked shapes after the first full rotation
-    defaultShapeIndices = shapes
-      .map((shape, index) => (shape.unlocked ? index : null))
-      .filter(index => index !== null);
-  }
-
-  const shapeIndex = defaultShapeIndices[currentShapeIndex];
-  const shape = shapes[shapeIndex];
-  shape.render(ctx); // Render the current shape
-  currentShapeIndex++;
+  currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+  drawShape(shapes[currentShapeIndex]);
 }
 
-// Start cycling shapes
-setInterval(cycleShapes, 2000); // Cycle every 2 seconds
+// Set an interval to cycle shapes every 2 seconds
+setInterval(cycleShapes, 2000);
+
+// Draw the initial shape
+drawShape(shapes[currentShapeIndex]);
