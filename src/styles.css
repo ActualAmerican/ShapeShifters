@@ -1,0 +1,26 @@
+/* General styling */
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #000; /* Dark background to match starfield */
+  font-family: Arial, sans-serif;  /* Default font */
+  color: white;  /* Default text color */
+}
+
+#starfieldCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* Send starfield canvas to the background */
+}
+
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 800px;  /* Fixed width for the game canvas */
+  height: 600px; /* Fixed height for the game canvas */
+  z-index: 1; /* Ensure shapes are above the starfield */
+}
