@@ -1,23 +1,16 @@
+/* General styling */
 body {
     margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
-    background: #000;
-    color: #00f7c1;
-    text-align: center;
     overflow: hidden;
-}
-
-#game-container {
-    position: relative;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-canvas {
-    border: 2px solid #00f7c1;
-    box-shadow: 0 0 20px #00f7c1;
-}
+    background-color: black; /* Fallback background */
+  }
+  
+  #starfieldCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Send canvas to the background */
+  }
+  
