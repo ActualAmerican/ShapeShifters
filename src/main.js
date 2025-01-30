@@ -13,7 +13,7 @@ const shapes = [
   { name: 'octagon', color: '#800000' },
   { name: 'heart', color: '#FF0000' },
   { name: 'kite', color: '#191970' },
-  { name: 'trapezoid', color: '#FFA500' },
+  { name: 'trapezoid', color: '#FF4500' },
   { name: 'arrow', color: '#FF91A4' },
   { name: 'crescentMoon', color: '#FFD700' },
 ];
