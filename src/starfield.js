@@ -1,4 +1,3 @@
-// Starfield Animation
 const starfieldCanvas = document.getElementById("starfieldCanvas");
 const ctxStarfield = starfieldCanvas.getContext("2d");
 
@@ -13,6 +12,7 @@ window.addEventListener("resize", () => {
   resizeCanvas();
   initializeStars();
   initializeComets();
+  initializeMilkyWay();
 });
 
 // Stars setup
@@ -36,15 +36,13 @@ initializeStars();
 // Comets setup
 let comets = [];
 const numComets = 5;
-const cometSpawnInterval = 1.5; // Increased spawn interval for reduced frequency
-let lastCometSpawnTime = 0; // Track the last comet spawn time
+const cometSpawnInterval = 1.5;
+let lastCometSpawnTime = 0;
 
 function initializeComets() {
-  comets = []; // Reset comets array when initializing
-
+  comets = [];
   for (let i = 0; i < numComets; i++) {
-    // Calculate comet's spawn time with a random delay
-    const spawnDelay = i * cometSpawnInterval; // Increase delay between each comet
+    const spawnDelay = i * cometSpawnInterval;
     const startX = Math.random() * starfieldCanvas.width;
     const startY = Math.random() * starfieldCanvas.height;
     const endX = startX + (Math.random() > 0.5 ? 1 : -1) * starfieldCanvas.width * 1.2;
@@ -59,24 +57,24 @@ function initializeComets() {
       endY,
       controlX,
       controlY,
-      progress: 0, // Start with 0 progress
+      progress: 0,
       speed: Math.random() * 0.0003 + 0.0003,
       trail: [],
-      maxTrailLength: 60, // Trail length unchanged
+      maxTrailLength: 60,
       streaks1: generateStreaks(),
       streaks2: generateStreaks(),
       streaks3: generateStreaks(),
       width: Math.random() * 3 + 1,
       glowSize: Math.random() * 6 + 5,
-      opacity: 0, // Start opacity at 0
-      opacitySpeed: 0.001, // Speed up fade-in
+      opacity: 0,
+      opacitySpeed: 0.001,
       rotation: Math.random() * Math.PI * 2,
       rotationSpeed: Math.random() * 0.0005 + 0.0005,
       rotationSpeedStreaks: 0.00004,
-      spawnDelay, // Individual comet delay
-      startTime: performance.now() / 1000 + spawnDelay, // Spawn time considering delay
-      fadeInDuration: 2, // Duration of fade-in effect in seconds
-      fadeStartTime: null, // Store when fade-in starts
+      spawnDelay,
+      startTime: performance.now() / 1000 + spawnDelay,
+      fadeInDuration: 2,
+      fadeStartTime: null,
     });
   }
 }
@@ -116,42 +114,31 @@ function drawStars() {
 
 // Draw comets and trails
 function drawComets() {
-  // Track the time to allow spawning at different times
   const currentTime = performance.now() / 1000;
 
   comets.forEach((comet) => {
     if (currentTime >= comet.startTime) {
-      // If the comet's start time has passed, update its progress
       comet.progress += comet.speed;
       if (comet.fadeStartTime === null) {
-        comet.fadeStartTime = currentTime; // Record the start of fade-in
+        comet.fadeStartTime = currentTime;
       }
     }
 
     const t = comet.progress;
-    const x =
-      (1 - t) * (1 - t) * comet.startX +
-      2 * (1 - t) * t * comet.controlX +
-      t * t * comet.endX;
-    const y =
-      (1 - t) * (1 - t) * comet.startY +
-      2 * (1 - t) * t * comet.controlY +
-      t * t * comet.endY;
+    const x = (1 - t) * (1 - t) * comet.startX + 2 * (1 - t) * t * comet.controlX + t * t * comet.endX;
+    const y = (1 - t) * (1 - t) * comet.startY + 2 * (1 - t) * t * comet.controlY + t * t * comet.endY;
 
-    // Add to trail with fading effect
     comet.trail.unshift({ x, y, alpha: 1.0 });
 
     if (comet.trail.length > comet.maxTrailLength) {
       comet.trail.pop();
     }
 
-    // Apply uniform fade-in effect for each comet (reset on each spawn)
     if (comet.fadeStartTime) {
       const fadeElapsed = currentTime - comet.fadeStartTime;
-      comet.opacity = Math.min(1, fadeElapsed / comet.fadeInDuration); // Fade in over duration
+      comet.opacity = Math.min(1, fadeElapsed / comet.fadeInDuration);
     }
 
-    // Only draw comet and streaks once the comet begins (ensuring uniform spawn)
     if (comet.progress > 0) {
       // Draw comet glow
       const glowGradient = ctxStarfield.createRadialGradient(x, y, 0, x, y, comet.glowSize);
@@ -162,7 +149,7 @@ function drawComets() {
       ctxStarfield.arc(x, y, comet.glowSize, 0, Math.PI * 2);
       ctxStarfield.fill();
 
-      // Draw dynamically fading and shrinking trail
+      // Draw trail
       for (let i = 0; i < comet.trail.length; i++) {
         const segment = comet.trail[i];
         const alpha = Math.max(0, 1 - i / comet.trail.length);
@@ -174,22 +161,19 @@ function drawComets() {
         ctxStarfield.fill();
       }
 
-      // Draw streaks with comet progress
+      // Draw streaks
       drawStreaks(ctxStarfield, x, y, comet.streaks1, comet.rotation, true, comet.opacity);
       drawStreaks(ctxStarfield, x, y, comet.streaks2, comet.rotation * 1.5, false, comet.opacity);
       drawStreaks(ctxStarfield, x, y, comet.streaks3, comet.rotation * 2, true, comet.opacity);
     }
 
-    // Update movement
     comet.rotation += comet.rotationSpeed;
 
-    // Reset comet after it has completed its journey
     if (comet.progress >= 1.2) {
-      // Add a delay before the next comet spawns, giving a sense of 1 at a time
       comet.startTime = performance.now() / 1000 + cometSpawnInterval;
-      comet.progress = 0; // Reset progress to start again
-      comet.opacity = 0; // Reset opacity for the next spawn (ensures uniform fade-in)
-      comet.fadeStartTime = null; // Reset fadeStartTime for the next spawn
+      comet.progress = 0;
+      comet.opacity = 0;
+      comet.fadeStartTime = null;
     }
   });
 }
@@ -216,10 +200,91 @@ function drawStreaks(ctx, x, y, streaks, rotation, isClockwise, opacity) {
   });
 }
 
+// Milky Way setup
+let milkyWayParticles = [];
+const numParticles = 1000;
+let centerX = starfieldCanvas.width / 2;
+let centerY = starfieldCanvas.height / 2;
+
+function initializeMilkyWay() {
+  milkyWayParticles = [];
+  for (let i = 0; i < numParticles; i++) {
+    let angle = Math.random() * Math.PI * 2;
+    let radius = Math.random() * (starfieldCanvas.width / 2);
+    let x = centerX + Math.cos(angle) * radius;
+    let y = centerY + Math.sin(angle) * radius;
+
+    milkyWayParticles.push({
+      x: x,
+      y: y,
+      size: Math.random() * 2 + 0.5,
+      speed: Math.random() * 0.05 + 0.01,
+      opacity: Math.random() * 0.5 + 0.3,
+      type: Math.random() < 0.7 ? "dust" : "gas",
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.01,
+    });
+  }
+}
+initializeMilkyWay();
+
+// Draw Milky Way
+function drawMilkyWay() {
+  // Central bright core
+  const coreGradient = ctxStarfield.createRadialGradient(
+    centerX, centerY, 0,
+    centerX, centerY, starfieldCanvas.width / 6
+  );
+  coreGradient.addColorStop(0, "rgba(255, 255, 150, 0.5)");
+  coreGradient.addColorStop(1, "rgba(255, 255, 150, 0)");
+  ctxStarfield.fillStyle = coreGradient;
+  ctxStarfield.beginPath();
+  ctxStarfield.arc(centerX, centerY, starfieldCanvas.width / 6, 0, Math.PI * 2);
+  ctxStarfield.fill();
+
+  // Draw particles (dust and gas)
+  milkyWayParticles.forEach(particle => {
+    ctxStarfield.save();
+    ctxStarfield.translate(particle.x, particle.y);
+    ctxStarfield.rotate(particle.rotation);
+    
+    if(particle.type === "dust") {
+      ctxStarfield.fillStyle = `rgba(170, 170, 255, ${particle.opacity})`;
+      ctxStarfield.beginPath();
+      ctxStarfield.arc(0, 0, particle.size, 0, Math.PI * 2);
+      ctxStarfield.fill();
+    } else {
+      ctxStarfield.fillStyle = `rgba(100, 100, 255, ${particle.opacity})`;
+      ctxStarfield.beginPath();
+      ctxStarfield.ellipse(0, 0, particle.size * 2, particle.size, 0, 0, Math.PI * 2);
+      ctxStarfield.fill();
+    }
+    
+    ctxStarfield.restore();
+
+    // Movement and rotation
+    particle.rotation += particle.rotationSpeed;
+    let angle = Math.atan2(particle.y - centerY, particle.x - centerX);
+    particle.x += Math.cos(angle) * particle.speed;
+    particle.y += Math.sin(angle) * particle.speed;
+
+    // Wrap around to maintain the illusion of an infinite galaxy
+    if((particle.x - centerX)**2 + (particle.y - centerY)**2 > (starfieldCanvas.width / 2)**2) {
+      angle = Math.random() * Math.PI * 2;
+      let newRadius = Math.random() * (starfieldCanvas.width / 2);
+      particle.x = centerX + Math.cos(angle) * newRadius;
+      particle.y = centerY + Math.sin(angle) * newRadius;
+    }
+  });
+}
+
 // Main animation loop
 function animate() {
   ctxStarfield.fillStyle = "black";
   ctxStarfield.fillRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
+
+  // Draw Milky Way first
+  drawMilkyWay();
 
   drawStars();
   drawComets();
