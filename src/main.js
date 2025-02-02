@@ -4,24 +4,23 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
-// List of shapes
+// List of shapes with a size factor for better scalability
 const shapes = [
-  { name: 'circle', color: '#0000FF' },
-  { name: 'triangle', color: '#00F7C1' },
-  { name: 'square', color: '#228B22' },
-  { name: 'pentagon', color: '#2E8B57' },
-  { name: 'octagon', color: '#800000' },
-  { name: 'heart', color: '#FF0000' },
-  { name: 'kite', color: '#191970' },
-  { name: 'trapezoid', color: '#FF4500' },
-  { name: 'arrow', color: '#FF91A4' },
-  { name: 'crescentMoon', color: '#FFD700' },
+  { name: 'circle', color: '#0000FF', size: 60 },
+  { name: 'triangle', color: '#00F7C1', size: 70 },
+  { name: 'square', color: '#228B22', size: 60 },
+  { name: 'pentagon', color: '#2E8B57', size: 70 },
+  { name: 'octagon', color: '#800000', size: 60 },
+  { name: 'heart', color: '#FF0000', size: 100 },
+  { name: 'kite', color: '#191970', size: 70 },
+  { name: 'trapezoid', color: '#FF4500', size: 100 },
+  { name: 'arrow', color: '#FF91A4', size: 100 },
+  { name: 'crescentMoon', color: '#FFD700', size: 70 },
 ];
 
 let currentShapeIndex = 0;
 
-// Drawing functions
-
+// Drawing functions with size adjustments
 function drawPolygon(x, y, sides, radius) {
   const angle = Math.PI * 2 / sides;
   const offsetAngle = Math.PI / 2;
@@ -70,43 +69,38 @@ function drawTrapezoid(x, y, size) {
 }
 
 function drawArrow(x, y, size) {
-  const headWidth = size * 0.6;  // Width of the arrowhead
-  const headHeight = size * 0.8; // Height of the arrowhead
-  const bodyWidth = size * 0.35; // Width of the arrow body
-  const bodyHeight = size * 1.5; // Extended arrow body length
+  const headWidth = size * 0.6;
+  const headHeight = size * 0.8;
+  const bodyWidth = size * 0.35;
+  const bodyHeight = size * 1.5;
 
   ctx.beginPath();
-
-  // Draw the arrowhead
-  ctx.moveTo(x, y - bodyHeight); // Top point of the arrowhead
-  ctx.lineTo(x - headWidth / 2, y - bodyHeight + headHeight); // Left point of the arrowhead
-  ctx.lineTo(x + headWidth / 2, y - bodyHeight + headHeight); // Right point of the arrowhead
+  ctx.moveTo(x, y - bodyHeight);
+  ctx.lineTo(x - headWidth / 2, y - bodyHeight + headHeight);
+  ctx.lineTo(x + headWidth / 2, y - bodyHeight + headHeight);
   ctx.closePath();
   ctx.fill();
 
-  // Draw the arrow body
   ctx.fillRect(x - bodyWidth / 2, y - bodyHeight + headHeight, bodyWidth, bodyHeight - headHeight);
 }
 
-// Function to draw crescent moon
 function drawCrescentMoon(x, y, size) {
   ctx.beginPath();
-  ctx.arc(x, y, size, 0, Math.PI * 2); // Outer arc
-  ctx.fillStyle = '#FFD700'; // Crescent's color
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFD700';
   ctx.fill();
   
-  ctx.globalCompositeOperation = 'destination-out'; // Subtract the inner part
+  ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  ctx.arc(x + size * 0.4, y, size * 0.7, 0, Math.PI * 2); // Adjusted Inner cutout arc
+  ctx.arc(x + size * 0.4, y, size * 0.7, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.globalCompositeOperation = 'source-over'; // Reset compositing mode
+  ctx.globalCompositeOperation = 'source-over';
 }
 
-
-// Function to draw the current shape
+// Function to draw the current shape, considering its size
 function drawShape(shapeData) {
-  const { name, color } = shapeData;
+  const { name, color, size } = shapeData;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -122,46 +116,47 @@ function drawShape(shapeData) {
   switch (name) {
     case 'circle':
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
       ctx.fill();
       break;
     case 'triangle':
       ctx.beginPath();
-      ctx.moveTo(centerX, centerY - 80);
-      ctx.lineTo(centerX - 70, centerY + 50);
-      ctx.lineTo(centerX + 70, centerY + 50);
+      ctx.moveTo(centerX, centerY - size);
+      ctx.lineTo(centerX - size, centerY + size);
+      ctx.lineTo(centerX + size, centerY + size);
       ctx.closePath();
       ctx.fill();
       break;
     case 'square':
-      ctx.fillRect(centerX - 60, centerY - 60, 120, 120);
+      ctx.fillRect(centerX - size, centerY - size, size * 2, size * 2);
       break;
     case 'pentagon':
-      drawPolygon(centerX, centerY, 5, 70);
+      drawPolygon(centerX, centerY, 5, size);
       break;
     case 'octagon':
-      drawPolygon(centerX, centerY, 8, 60);
+      drawPolygon(centerX, centerY, 8, size);
       break;
     case 'heart':
-      drawHeart(centerX, centerY, 100);
+      drawHeart(centerX, centerY, size);
       break;
     case 'kite':
-      drawKite(centerX, centerY, 70);
+      drawKite(centerX, centerY, size);
       break;
     case 'trapezoid':
-      drawTrapezoid(centerX, centerY, 100);
+      drawTrapezoid(centerX, centerY, size);
       break;
     case 'arrow':
-      drawArrow(centerX, centerY, 100);
+      drawArrow(centerX, centerY, size);
       break;
     case 'crescentMoon':
-      drawCrescentMoon(centerX, centerY, 70);
+      drawCrescentMoon(centerX, centerY, size);
       break;
     default:
       console.error('Unknown shape:', name);
   }
 }
 
+// Cycle through shapes and render them
 function cycleShapes() {
   currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
   drawShape(shapes[currentShapeIndex]);
