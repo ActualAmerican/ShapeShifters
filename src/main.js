@@ -4,7 +4,6 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
-// List of shapes with a size factor for better scalability
 const shapes = [
   { name: 'circle', color: '#0000FF', size: 60 },
   { name: 'triangle', color: '#00F7C1', size: 70 },
@@ -20,7 +19,6 @@ const shapes = [
 
 let currentShapeIndex = 0;
 
-// Drawing functions with size adjustments
 function drawPolygon(x, y, sides, radius) {
   const angle = Math.PI * 2 / sides;
   const offsetAngle = Math.PI / 2;
@@ -98,7 +96,6 @@ function drawCrescentMoon(x, y, size) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-// Function to draw the current shape, considering its size
 function drawShape(shapeData) {
   const { name, color, size } = shapeData;
 
@@ -156,7 +153,6 @@ function drawShape(shapeData) {
   }
 }
 
-// Cycle through shapes and render them
 function cycleShapes() {
   currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
   drawShape(shapes[currentShapeIndex]);

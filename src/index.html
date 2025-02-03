@@ -7,14 +7,15 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <canvas id="starfieldCanvas"></canvas> <!-- Starfield Canvas -->
+  <canvas id="starfieldCanvas"></canvas> <!-- Background Starfield -->
+  <canvas id="gameCanvas"></canvas> <!-- Shape Canvas -->
+
   <div id="scoreboard">
     <div id="score">Score: 0</div>
     <div id="personalBest">Personal Best: 0</div>
   </div>
-  <canvas id="gameCanvas"></canvas> <!-- Shape Canvas -->
-  
+
   <script src="starfield.js"></script>
-  <script src="main.js"></script>
+  <script type="module" src="main.js"></script> <!-- Ensure module script for imports -->
 </body>
 </html>
