@@ -5,15 +5,10 @@ body {
   background-color: #000;
   font-family: Arial, sans-serif;
   color: white;
-}
-
-#starfieldCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
 #scoreboard {
@@ -28,6 +23,7 @@ body {
   width: fit-content;
   white-space: nowrap;
   text-align: right;
+  user-select: text; /* Allows text highlighting for copying */
 }
 
 #score, #personalBest {
@@ -46,14 +42,10 @@ body {
   opacity: 0.8;
 }
 
-
 #gameCanvas {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  /* Remove absolute positioning and transform for simplicity */
   width: 800px;
   height: 600px;
-  border: 2px solid white;
+  background-color: #000; /* Ensure no border is drawn unless intended */
   z-index: 1;
 }
