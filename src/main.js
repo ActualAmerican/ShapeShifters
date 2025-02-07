@@ -19,107 +19,83 @@ let currentLevel = 1; // Start with level 1
 let gameTime = 0; // Time in seconds
 let gameActive = false; // Flag to control game state
 const levelDurations = [60, 120, 180]; // Durations in seconds for each level
+const scoreIncreaseRate = 1; // Points per second
 
 // Create an instance of Square
 const square = new Square(playAreaX + playAreaSize / 2, playAreaY + playAreaSize / 2, 50, '#228B22');
 
 // Drawing functions
 
-// Function to draw play area (only the square, removing the dot pattern)
 function drawPlayArea() {
   ctx.strokeStyle = 'white';
   ctx.lineWidth = 4;
   ctx.strokeRect(playAreaX, playAreaY, playAreaSize, playAreaSize);
 }
 
-// Function to draw score and personal best
 function drawScore() {
-  ctx.fillStyle = 'white';
-  ctx.font = '20px Arial';
-  ctx.textAlign = 'right';
-  const rightEdge = playAreaX + playAreaSize;
-  ctx.fillText(`Score: ${score}`, rightEdge - 10, playAreaY - 30);
-  ctx.fillText(`Best: ${personalBest}`, rightEdge - 10, playAreaY - 10);
-}
+  if (gameActive) {
+    console.log('Drawing Score:', score); // Debug log to check if this function is being called
+    console.log('Context:', ctx); // Check if ctx is defined
+    if (ctx) {
+      ctx.fillStyle = 'white';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'right';
+      const rightEdge = playAreaX + playAreaSize;
+      ctx.fillText(`Score: ${Math.floor(score)}`, rightEdge - 10, playAreaY - 30);
+      ctx.fillText(`Best: ${personalBest}`, rightEdge - 10, playAreaY - 10);
 
-// Function to draw the glow effect for the sequence with a smoother fade-in
-function drawSequenceGlow(currentTime) {
-  ctx.lineWidth = 2;
-  for (let i = 0; i < square.sequence.length; i++) {
-    let side = square.sequence[i];
-    let x1, y1, x2, y2;
-    
-    switch(side) {
-      case 0: // Top
-        x1 = square.x - square.size / 2;
-        y1 = square.y - square.size / 2;
-        x2 = square.x + square.size / 2;
-        y2 = square.y - square.size / 2;
-        break;
-      case 1: // Right
-        x1 = square.x + square.size / 2;
-        y1 = square.y - square.size / 2;
-        x2 = square.x + square.size / 2;
-        y2 = square.y + square.size / 2;
-        break;
-      case 2: // Bottom
-        x1 = square.x - square.size / 2;
-        y1 = square.y + square.size / 2;
-        x2 = square.x + square.size / 2;
-        y2 = square.y + square.size / 2;
-        break;
-      case 3: // Left
-        x1 = square.x - square.size / 2;
-        y1 = square.y - square.size / 2;
-        x2 = square.x - square.size / 2;
-        y2 = square.y + square.size / 2;
-        break;
-    }
-    
-    // Calculate fade-in effect
-    let fadeProgress = (currentTime % square.pulseSpeed) / square.pulseSpeed;
-    let alpha = Math.min(1, fadeProgress * 2); // Quick fade in, half the pulseSpeed to full opacity
-    
-    // Flash the correct side for a short duration
-    if (Math.floor(currentTime / square.pulseSpeed) % square.sequence.length === i) {
-      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`; // Subtle white flash with fade
+      // Debug: Draw a test line to show where the score is supposed to be
+      ctx.strokeStyle = 'red';
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(rightEdge - 10, playAreaY - 30);
+      ctx.lineTo(rightEdge - 10, playAreaY - 10);
       ctx.stroke();
+    } else {
+      console.error('Context is not available in drawScore');
     }
   }
 }
 
-// Function to start the game
+// Function to start game
 function startGame() {
+  console.log('Game starting. Game Active:', gameActive);
   gameActive = true;
+  console.log('Game Active set to:', gameActive);
   score = 0;
   currentLevel = 1;
   gameTime = 0;
-  square.size = 50;
-  square.x = playAreaX + playAreaSize / 2;
-  square.y = playAreaY + playAreaSize / 2;
-  square.isMoving = false;
-  square.generateSequence();
+  square.reset(); // Assuming reset method exists in Square.js
+  createEndButton(); // Create the end game button
+
+  // Debug: Draw a test rectangle
+  ctx.fillStyle = 'red';
+  ctx.fillRect(10, 10, 50, 50);
+
   requestAnimationFrame(gameLoop);
 }
 
 // Function to handle game over
 function endGame() {
+  console.log('Game ending. Game Active:', gameActive);
   gameActive = false;
+  console.log('Game Active set to:', gameActive);
   console.log('Game Over! Final Score:', score);
   // Update personal best if necessary
   if (score > personalBest) {
     personalBest = score;
     localStorage.setItem('personalBest', personalBest);
   }
+  // Remove the end game button
+  const endButton = document.getElementById('endGameButton');
+  if (endButton) document.body.removeChild(endButton);
   // Here you might want to show a game over screen, etc.
+  createStartButton(); // Recreate the start button
 }
 
 // Game loop
 let lastTime = 0;
 function gameLoop(timestamp) {
+  console.log('Game Loop running. Game Active:', gameActive);
   if (!gameActive) return; // Exit if game isn't active
   
   // Calculate elapsed time
@@ -133,49 +109,50 @@ function gameLoop(timestamp) {
 
   // Draw the play area and score
   drawPlayArea();
-  drawScore(); // Ensure this is called to update the scoreboard
+  drawScore(); // This should now be called when gameActive is true
 
-  // Update square - increased growth rate for testing
+  // Increase score over time
+  score += (scoreIncreaseRate * deltaTime / 1000); // Score increase per second
+  console.log('Current Score:', score);
+
+  // Update the current shape (square for now)
   square.update(deltaTime, currentLevel);
-  console.log('Square size:', square.size); // Log size to verify expansion
-
-  // Draw the square
+  
+  // Draw the current shape
   square.draw(ctx);
 
-  // Draw the sequence glow with current time
-  drawSequenceGlow(timestamp);
-
-  // Check if square has reached boundary
+  // Check if shape has reached boundary
   if (square.checkBoundary(playAreaX, playAreaY, playAreaSize)) {
     endGame();
     return;
   }
 
   // Check if it's time to move to the next level or end the game
-if ((timestamp / 1000 - gameTime) >= levelDurations[currentLevel - 1]) {
-  if (currentLevel < 3) {
-    currentLevel++;
-    gameTime = timestamp / 1000; // Reset game time for the next level
-  } else {
-    endGame();
-    return;
+  if ((timestamp / 1000 - gameTime) >= levelDurations[currentLevel - 1]) {
+    if (currentLevel < 3) {
+      currentLevel++;
+      gameTime = timestamp / 1000; // Reset game time for the next level
+    } else {
+      endGame();
+      return;
+    }
   }
-}
 
-// Check if sequence is completed
-if (square.isSequenceCompleted()) {
-  square.size -= 10; // Shrink on sequence completion
-  square.resetSequence(currentLevel);
-  score += 50; // Bonus for completing sequence
-}
+  // Handle scoring based on shape mechanics in Square.js
+  if (square.isSequenceCompleted()) {
+    score += 50; // Bonus for completing sequence
+    square.resetSequence(currentLevel); // Reset sequence for next round
+    console.log('Sequence completed. Score updated:', score);
+  }
 
-requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);
 }
 
 // Event listener for player interaction
 canvas.addEventListener('click', handleClick);
 
 function handleClick(event) {
+  console.log('Click event. Game Active:', gameActive);
   if (!gameActive) return; // Don't handle clicks if the game isn't active
   
   const rect = canvas.getBoundingClientRect();
@@ -184,6 +161,7 @@ function handleClick(event) {
 
   if (square.handleClick(x, y)) {
     score += 10; // Increase score on correct tap
+    console.log('Correct click. Score updated:', score);
   }
 }
 
@@ -209,7 +187,29 @@ function createStartButton() {
   document.body.appendChild(startButton);
 }
 
+// Function to create and handle the end game button
+function createEndButton() {
+  const endButton = document.createElement('button');
+  endButton.id = 'endGameButton';
+  endButton.textContent = 'End Game';
+  endButton.style.position = 'absolute';
+  endButton.style.top = '20px';
+  endButton.style.right = '20px';
+  endButton.style.fontSize = '16px';
+  endButton.style.padding = '5px 10px';
+  endButton.style.zIndex = '11'; // Above everything else
+
+  // Add click event listener to end the game
+  endButton.addEventListener('click', () => {
+    endGame();
+  });
+
+  // Add the button to the document body
+  document.body.appendChild(endButton);
+}
+
 // Example of how to start the game, now with a start button
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM Loaded. Creating Start Button');
   createStartButton();
 });

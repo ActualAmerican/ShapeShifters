@@ -8,7 +8,7 @@ class Square {
     this.y = y;
     this.sequence = []; // Will store the sequence of sides to tap
     this.sequenceIndex = 0;
-    this.growthRate = 0.5; // Increased for testing, adjust as needed
+    this.growthRate = 0.1; // How fast the square grows
     this.pulseSpeed = 1000; // Speed at which sides pulse in ms
     this.isMoving = false; // For level 3, to determine if the square moves
     this.initialX = x;
@@ -26,13 +26,13 @@ class Square {
     console.log('Updating square size:', this.size, 'DeltaTime:', deltaTime, 'Level:', level);
     
     if (level === 1) {
-      this.growthRate = 0.5; // Adjust for testing, revert to 0.1 when done
+      this.growthRate = 0.1;
       this.pulseSpeed = 1000;
     } else if (level === 2) {
-      this.growthRate = 0.6; // Faster growth for level 2
+      this.growthRate = 0.2; // Faster growth for level 2
       this.pulseSpeed = 800;
     } else if (level === 3) {
-      this.growthRate = 0.7; // Even faster for level 3
+      this.growthRate = 0.3; // Even faster for level 3
       this.pulseSpeed = 600;
       this.isMoving = true; // Square moves in level 3
     }
@@ -84,17 +84,17 @@ class Square {
     // Check if the clicked side matches the current side in the sequence
     if (clickedSide === this.sequence[this.sequenceIndex]) {
       this.sequenceIndex++;
-      if (this.sequenceIndex >= this.sequence.length) {
-        // Entire sequence completed, reset and return true
+      if (this.sequenceIndex === this.sequence.length) {
+        // Sequence completed, reset for next round
         this.resetSequence(currentLevel);
-        return true; // Interaction was correct and sequence completed
+        return true; // Return true if the sequence is completed
       }
-      return false; // Interaction was correct but sequence not completed
+      return false; // Return false if sequence is not yet completed
+    } else {
+      // If the click was incorrect, reset the sequence
+      this.resetSequence(currentLevel);
+      return false; // Return false if the click was incorrect
     }
-    // Reset the sequence index if the click was incorrect
-    this.sequenceIndex = 0;
-    this.resetSequence(currentLevel);
-    return false; // Interaction was incorrect
   }
 
   // Check if the sequence is completed

@@ -22,46 +22,7 @@ body {
 
 #gameCanvas {
   background-color: transparent; /* Fully transparent */
-  /* Ensure no margin or padding */
   margin: 0;
   padding: 0;
-  z-index: 0; /* Above starfield but below scoreboard */
-}
-
-#scoreboard {
-  position: absolute;
-  /* Positioning it relative to the top right of the play area */
-  top: calc(50% - 380px); /* 50% of the viewport height minus half the play area size plus some offset for alignment */
-  right: calc(50% - 300px); /* 50% of the viewport width plus half the play area size minus the width of scoreboard for alignment */
-  font-size: 26px;
-  z-index: 10;
-  color: white;
-  user-select: text;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  width: fit-content;
-  white-space: nowrap;
-  text-align: right;
-}
-
-#score {
-  font-size: 32px; /* Increased font size for current score */
-  font-weight: bold;
-}
-
-#personalBest {
-  font-size: 22px; /* Keeping the same font size for PB */
-  opacity: 0.6; /* Reduced opacity for personal best */
-}
-
-#debugInfo {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.5); /* Faded white text */
-  font-size: 16px;
-  text-align: center;
-  z-index: 10;
+  z-index: 0; /* Above starfield */
 }
