@@ -1,16 +1,25 @@
-// main.js
 import { Square } from './shapes/Shape.js';
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+// Game canvas setup
+const gameCanvas = document.getElementById('gameCanvas');
+const gameCtx = gameCanvas.getContext('2d');
+gameCanvas.width = 800;
+gameCanvas.height = 600;
 
-canvas.width = 800;
-canvas.height = 600;
+// Scoreboard canvas setup
+const scoreboardCanvas = document.createElement('canvas');
+scoreboardCanvas.id = 'scoreboardCanvas';
+scoreboardCanvas.width = 300; // Adjusted for better visibility
+scoreboardCanvas.height = 50;
+document.body.appendChild(scoreboardCanvas);
+const scoreboardCtx = scoreboardCanvas.getContext('2d');
+
+// Styling the scoreboard canvas (now in CSS)
 
 // Define the play area dimensions
 const playAreaSize = 600;
-const playAreaX = (canvas.width - playAreaSize) / 2;
-const playAreaY = (canvas.height - playAreaSize) / 2;
+const playAreaX = (gameCanvas.width - playAreaSize) / 2;
+const playAreaY = (gameCanvas.height - playAreaSize) / 2;
 
 // Define game variables
 let score = 0;
@@ -27,58 +36,50 @@ const square = new Square(playAreaX + playAreaSize / 2, playAreaY + playAreaSize
 // Drawing functions
 
 function drawPlayArea() {
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(playAreaX, playAreaY, playAreaSize, playAreaSize);
+  gameCtx.strokeStyle = 'white';
+  gameCtx.lineWidth = 4;
+  gameCtx.strokeRect(playAreaX, playAreaY, playAreaSize, playAreaSize);
 }
 
 function drawScore() {
   if (gameActive) {
-    console.log('Drawing Score:', score); // Debug log to check if this function is being called
-    console.log('Context:', ctx); // Check if ctx is defined
-    if (ctx) {
-      ctx.fillStyle = 'white';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'right';
-      const rightEdge = playAreaX + playAreaSize;
-      ctx.fillText(`Score: ${Math.floor(score)}`, rightEdge - 10, playAreaY - 30);
-      ctx.fillText(`Best: ${personalBest}`, rightEdge - 10, playAreaY - 10);
-
-      // Debug: Draw a test line to show where the score is supposed to be
-      ctx.strokeStyle = 'red';
-      ctx.beginPath();
-      ctx.moveTo(rightEdge - 10, playAreaY - 30);
-      ctx.lineTo(rightEdge - 10, playAreaY - 10);
-      ctx.stroke();
-    } else {
-      console.error('Context is not available in drawScore');
-    }
+    scoreboardCtx.clearRect(0, 0, scoreboardCanvas.width, scoreboardCanvas.height);
+    
+    // Score text
+    scoreboardCtx.font = '24px Arial'; // Match CSS
+    scoreboardCtx.fillStyle = 'white';
+    scoreboardCtx.textAlign = 'right'; // Right align text
+    scoreboardCtx.fillText(`Score: ${Math.floor(score)}`, scoreboardCanvas.width - 10, 30);
+    
+    // Personal Best text with lower opacity
+    scoreboardCtx.font = '16px Arial'; // Match CSS
+    scoreboardCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Lower opacity
+    scoreboardCtx.fillText(`Best: ${personalBest}`, scoreboardCanvas.width - 10, 50);
   }
 }
 
 // Function to start game
 function startGame() {
-  console.log('Game starting. Game Active:', gameActive);
   gameActive = true;
-  console.log('Game Active set to:', gameActive);
   score = 0;
   currentLevel = 1;
   gameTime = 0;
   square.reset(); // Assuming reset method exists in Square.js
   createEndButton(); // Create the end game button
 
+  // Make sure the scoreboard is visible
+  scoreboardCanvas.style.display = 'block';
+
   // Debug: Draw a test rectangle
-  ctx.fillStyle = 'red';
-  ctx.fillRect(10, 10, 50, 50);
+  gameCtx.fillStyle = 'red';
+  gameCtx.fillRect(10, 10, 50, 50);
 
   requestAnimationFrame(gameLoop);
 }
 
 // Function to handle game over
 function endGame() {
-  console.log('Game ending. Game Active:', gameActive);
   gameActive = false;
-  console.log('Game Active set to:', gameActive);
   console.log('Game Over! Final Score:', score);
   // Update personal best if necessary
   if (score > personalBest) {
@@ -88,38 +89,38 @@ function endGame() {
   // Remove the end game button
   const endButton = document.getElementById('endGameButton');
   if (endButton) document.body.removeChild(endButton);
-  // Here you might want to show a game over screen, etc.
+  
+  // Hide the scoreboard
+  scoreboardCanvas.style.display = 'none';
+
   createStartButton(); // Recreate the start button
 }
 
 // Game loop
 let lastTime = 0;
 function gameLoop(timestamp) {
-  console.log('Game Loop running. Game Active:', gameActive);
   if (!gameActive) return; // Exit if game isn't active
   
-  // Calculate elapsed time
   let deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
   if (gameTime === 0) gameTime = timestamp / 1000;
 
-  // Clear the canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Clear the game canvas
+  gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
   // Draw the play area and score
   drawPlayArea();
-  drawScore(); // This should now be called when gameActive is true
+  drawScore(); 
 
   // Increase score over time
-  score += (scoreIncreaseRate * deltaTime / 1000); // Score increase per second
-  console.log('Current Score:', score);
+  score += (scoreIncreaseRate * deltaTime / 1000);
 
   // Update the current shape (square for now)
   square.update(deltaTime, currentLevel);
   
   // Draw the current shape
-  square.draw(ctx);
+  square.draw(gameCtx);
 
   // Check if shape has reached boundary
   if (square.checkBoundary(playAreaX, playAreaY, playAreaSize)) {
@@ -142,26 +143,23 @@ function gameLoop(timestamp) {
   if (square.isSequenceCompleted()) {
     score += 50; // Bonus for completing sequence
     square.resetSequence(currentLevel); // Reset sequence for next round
-    console.log('Sequence completed. Score updated:', score);
   }
 
   requestAnimationFrame(gameLoop);
 }
 
 // Event listener for player interaction
-canvas.addEventListener('click', handleClick);
+gameCanvas.addEventListener('click', handleClick);
 
 function handleClick(event) {
-  console.log('Click event. Game Active:', gameActive);
   if (!gameActive) return; // Don't handle clicks if the game isn't active
   
-  const rect = canvas.getBoundingClientRect();
+  const rect = gameCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
 
   if (square.handleClick(x, y)) {
     score += 10; // Increase score on correct tap
-    console.log('Correct click. Score updated:', score);
   }
 }
 
@@ -169,21 +167,11 @@ function handleClick(event) {
 function createStartButton() {
   const startButton = document.createElement('button');
   startButton.textContent = 'Start Game';
-  startButton.style.position = 'absolute';
-  startButton.style.top = '50%';
-  startButton.style.left = '50%';
-  startButton.style.transform = 'translate(-50%, -50%)';
-  startButton.style.fontSize = '24px';
-  startButton.style.padding = '10px 20px';
-  startButton.style.zIndex = '11'; // Above everything else
-
-  // Add click event listener to start the game
+  startButton.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; padding: 10px 20px; z-index: 11;';
   startButton.addEventListener('click', () => {
-    document.body.removeChild(startButton); // Remove the button once clicked
+    document.body.removeChild(startButton);
     startGame();
   });
-
-  // Add the button to the document body
   document.body.appendChild(startButton);
 }
 
@@ -192,24 +180,15 @@ function createEndButton() {
   const endButton = document.createElement('button');
   endButton.id = 'endGameButton';
   endButton.textContent = 'End Game';
-  endButton.style.position = 'absolute';
-  endButton.style.top = '20px';
-  endButton.style.right = '20px';
-  endButton.style.fontSize = '16px';
-  endButton.style.padding = '5px 10px';
-  endButton.style.zIndex = '11'; // Above everything else
-
-  // Add click event listener to end the game
-  endButton.addEventListener('click', () => {
-    endGame();
-  });
-
-  // Add the button to the document body
+  endButton.style.cssText = 'position: absolute; top: 20px; right: 20px; font-size: 16px; padding: 5px 10px; z-index: 11;';
+  endButton.addEventListener('click', endGame);
   document.body.appendChild(endButton);
 }
 
-// Example of how to start the game, now with a start button
+// Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM Loaded. Creating Start Button');
+  // Hide the scoreboard initially
+  scoreboardCanvas.style.display = 'none';
   createStartButton();
+  // The starfield.js script will handle its own animation loop, so we don't need to start it here.
 });

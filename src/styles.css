@@ -1,4 +1,3 @@
-/* styles.css */
 body {
   margin: 0;
   padding: 0;
@@ -8,7 +7,7 @@ body {
   height: 100vh;
   background-color: #000;
   overflow: hidden;
-  position: relative; /* Make body relative to position children absolutely */
+  position: relative;
 }
 
 #starfieldCanvas {
@@ -17,12 +16,26 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1; /* Ensure it's behind the game canvas */
+  z-index: -1;
 }
 
 #gameCanvas {
-  background-color: transparent; /* Fully transparent */
+  background-color: transparent;
   margin: 0;
   padding: 0;
-  z-index: 0; /* Above starfield */
+  z-index: 0;
+}
+
+#scoreboardCanvas {
+  position: absolute;
+  top: 270px; /* Adjust this value as needed */
+  left: 54.8%; /* Adjust this value as needed */
+  transform: translateX(-50%); /* This centers the scoreboard based on its left side */
+  z-index: 1;
+  background-color: transparent; /* Remove the background color */
+  border-radius: 5px;
+  padding: 5px;
+  display: none; /* Hide by default */
+  width: 300px; /* Explicit width */
+  height: 50px; /* Explicit height */
 }
