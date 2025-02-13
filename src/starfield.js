@@ -235,8 +235,8 @@ function drawMilkyWay() {
     centerX, centerY, 0,
     centerX, centerY, starfieldCanvas.width / 6
   );
-  coreGradient.addColorStop(0, "rgba(255, 255, 150, 0.5)");
-  coreGradient.addColorStop(1, "rgba(255, 255, 150, 0)");
+  coreGradient.addColorStop(0, "rgba(150, 169, 255, 0.5)");
+  coreGradient.addColorStop(1, "rgba(199, 150, 255, 0)");
   ctxStarfield.fillStyle = coreGradient;
   ctxStarfield.beginPath();
   ctxStarfield.arc(centerX, centerY, starfieldCanvas.width / 6, 0, Math.PI * 2);
