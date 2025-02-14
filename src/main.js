@@ -1,4 +1,4 @@
-import { Square } from './shapes/Shape.js';
+import { Square } from './shapes/shapes.js';
 
 // Game canvas setup
 const gameCanvas = document.getElementById('gameCanvas');
@@ -30,13 +30,8 @@ let gameActive = false; // Flag to control game state
 const levelDurations = [60, 120, 180]; // Durations in seconds for each level
 const scoreIncreaseRate = 1; // Points per second
 
-// Array to hold all shape instances
-const shapes = [
-  new Square(playAreaX + playAreaSize / 2, playAreaY + playAreaSize / 2, 50, '#228B22', 'Square')
-];
-
-let currentShapeIndex = 0;
-let animationFrameId = null; // To manage requestAnimationFrame
+// Create an instance of Square
+const square = new Square(playAreaX + playAreaSize / 2, playAreaY + playAreaSize / 2, 50, '#228B22', 'Square');
 
 // Drawing functions
 
@@ -50,13 +45,13 @@ function drawScore() {
   if (gameActive) {
     scoreboardCtx.clearRect(0, 0, scoreboardCanvas.width, scoreboardCanvas.height);
     
-    // Score text with 2 decimal places
+    // Score text with 2 decimal points
     scoreboardCtx.font = '24px Arial'; 
     scoreboardCtx.fillStyle = 'white';
     scoreboardCtx.textAlign = 'right'; 
     scoreboardCtx.fillText(`Score: ${score.toFixed(2)}`, scoreboardCanvas.width - 10, 30);
     
-    // Personal Best text with lower opacity and 2 decimal places
+    // Personal Best text with lower opacity and 2 decimal points
     scoreboardCtx.font = '16px Arial'; 
     scoreboardCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'; 
     scoreboardCtx.fillText(`Best: ${parseFloat(personalBest).toFixed(2)}`, scoreboardCanvas.width - 10, 50);
@@ -66,31 +61,30 @@ function drawScore() {
 function drawDebugInfo() {
   gameCtx.fillStyle = 'white';
   gameCtx.font = '16px Arial';
-  gameCtx.fillText(`Shape: ${shapes[currentShapeIndex].name}, Level: ${currentLevel}`, 20, gameCanvas.height - 20);
+  gameCtx.fillText(`Shape: ${square.name}, Level: ${currentLevel}`, gameCanvas.width - 150, 50); // Position below the End Game button
 }
 
 // Function to start game
 function startGame() {
   gameActive = true;
-  score = 0; // Explicitly reset score
-  console.log('Score reset to:', score); // Debug log
+  score = 0; // Reset score
+  console.log('Score reset to:', score); // Debug log to confirm reset
   currentLevel = 1;
-  currentShapeIndex = 0;
   gameTime = 0;
-  shapes[0].reset(); 
-  createEndButton(); 
+  square.reset(); // Assuming reset method exists in Square.js
+  createEndButton(); // Create the end game button
 
+  // Make sure the scoreboard is visible
   scoreboardCanvas.style.display = 'block';
-  drawScore(); // Force an immediate update of the score display
 
+  // Force an immediate update of the score display
+  drawScore();
+
+  // Debug: Draw a test rectangle
   gameCtx.fillStyle = 'red';
   gameCtx.fillRect(10, 10, 50, 50);
 
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId); // Cancel previous animation frame if exists
-  }
-  lastTime = 0; // Reset for delta calculation
-  animationFrameId = requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);
 }
 
 // Function to handle game over
@@ -109,16 +103,13 @@ function endGame() {
   // Hide the scoreboard
   scoreboardCanvas.style.display = 'none';
 
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId); // Stop the game loop
-  }
-  
   // Create and show the game over popup
   createGameOverPopup();
 }
 
 // New function to create the game over popup
 function createGameOverPopup() {
+  // Create the popup container
   const popup = document.createElement('div');
   popup.id = 'gameOverPopup';
   popup.style.cssText = `
@@ -133,6 +124,7 @@ function createGameOverPopup() {
     z-index: 12;
   `;
 
+  // Add the score display
   const scoreDisplay = document.createElement('p');
   scoreDisplay.textContent = `Your Score: ${score.toFixed(2)}`;
   scoreDisplay.style.color = 'white';
@@ -176,6 +168,7 @@ function createGameOverPopup() {
   });
   popup.appendChild(continueWithAdButton);
 
+  // Add the popup to the document
   document.body.appendChild(popup);
 }
 
@@ -200,45 +193,36 @@ function gameLoop(timestamp) {
   // Increase score over time
   score += (scoreIncreaseRate * deltaTime / 1000);
 
-  // Update the current shape
-  shapes[currentShapeIndex].update(deltaTime, currentLevel);
+  // Update the current shape (square for now)
+  square.update(deltaTime, currentLevel);
   
   // Draw the current shape
-  shapes[currentShapeIndex].draw(gameCtx);
+  square.draw(gameCtx);
 
   // Check if shape has reached boundary
-  if (shapes[currentShapeIndex].checkBoundary(playAreaX, playAreaY, playAreaSize)) {
+  if (square.checkBoundary(playAreaX, playAreaY, playAreaSize)) {
     endGame();
     return;
   }
 
-  // Check if it's time to move to the next shape or level
+  // Check if it's time to move to the next level or end the game
   if ((timestamp / 1000 - gameTime) >= levelDurations[currentLevel - 1]) {
-    // Move to next shape
-    currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
-    
-    // If we've gone through all shapes at this level, increase level
-    if (currentShapeIndex === 0) { 
-      if (currentLevel < 3) {
-        currentLevel++;
-      }
-      // Stay at level 3 forever
-      else {
-        currentLevel = 3;
-      }
+    if (currentLevel < 3) {
+      currentLevel++;
+      gameTime = timestamp / 1000; // Reset game time for the next level
+    } else {
+      endGame();
+      return;
     }
-    // Reset game time for the new shape or level
-    gameTime = timestamp / 1000;
-    shapes[currentShapeIndex].reset(); // Reset the new shape or current shape if level increased
   }
 
-  // Handle scoring based on shape mechanics
-  if (shapes[currentShapeIndex].isSequenceCompleted()) {
+  // Handle scoring based on shape mechanics in Square.js
+  if (square.isSequenceCompleted()) {
     score += 50; // Bonus for completing sequence
-    shapes[currentShapeIndex].resetSequence(currentLevel); // Reset sequence for next round
+    square.resetSequence(currentLevel); // Reset sequence for next round
   }
 
-  animationFrameId = requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);
 }
 
 // Event listener for player interaction
@@ -251,7 +235,7 @@ function handleClick(event) {
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
 
-  if (shapes[currentShapeIndex].handleClick(x, y)) {
+  if (square.handleClick(x, y)) {
     score += 10; // Increase score on correct tap
   }
 }
