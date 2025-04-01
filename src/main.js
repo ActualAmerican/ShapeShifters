@@ -215,13 +215,14 @@ function gameLoop(timestamp) {
     return;
   }
 
+  // Modified level transition logic:
   if ((timestamp / 1000 - gameTime) >= levelDurations[currentLevel - 1]) {
     if (currentLevel < 3) {
       currentLevel++;
       gameTime = timestamp / 1000;
     } else {
-      endGame();
-      return;
+      // For level 3, keep the game running indefinitely by resetting gameTime.
+      gameTime = timestamp / 1000;
     }
   }
 
