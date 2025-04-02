@@ -1,4 +1,4 @@
-import { Square } from './shapes/shapes.js';
+import ShapeManager from './ShapeManager.js';
 
 // Game canvas setup
 const gameCanvas = document.getElementById('gameCanvas');
@@ -19,14 +19,10 @@ const scoreboardCtx = scoreboardCanvas.getContext('2d');
 // Function to update scoreboard position dynamically
 function updateScoreboardPosition() {
   const canvasRect = gameCanvas.getBoundingClientRect();
-  scoreboardCanvas.style.left = (canvasRect.left + 560) + 'px'; // Align right edge with play area's right edge
-  scoreboardCanvas.style.top = (canvasRect.top - 60) + 'px'; // Position just above the canvas
+  scoreboardCanvas.style.left = (canvasRect.left + 560) + 'px';
+  scoreboardCanvas.style.top = (canvasRect.top - 60) + 'px';
 }
-
-// Initial positioning
 updateScoreboardPosition();
-
-// Update position on window resize
 window.addEventListener('resize', updateScoreboardPosition);
 
 // Define the play area dimensions
@@ -37,19 +33,18 @@ const playAreaY = (gameCanvas.height - playAreaSize) / 2;
 // Define game variables
 let score = 0;
 let personalBest = localStorage.getItem('personalBest') || 0;
-let currentLevel = 1; // Start with level 1
-let gameTime = 0; // Time in seconds
-let gameActive = false; // Flag to control game state
-let lastTime = 0; // For deltaTime calculation
-let animationFrameId = null; // To manage animation frame
-const levelDurations = [60, 120, 180]; // Durations in seconds for each level
-const scoreIncreaseRate = 1; // Points per second
+let currentLevel = 1; // Levels 1, 2, and 3 (level 3 runs indefinitely)
+let gameTime = 0;
+let gameActive = false;
+let lastTime = 0;
+let animationFrameId = null;
+const levelDurations = [60, 120, 180]; // In seconds (level 3 is made infinite)
+const scoreIncreaseRate = 1;
 
-// Create an instance of Square
-const square = new Square(playAreaX + playAreaSize / 2, playAreaY + playAreaSize / 2, 50, '#228B22', 'Square');
+// Instantiate the ShapeManager
+const shapeManager = new ShapeManager(gameCanvas, gameCtx);
 
 // Drawing functions
-
 function drawPlayArea() {
   gameCtx.strokeStyle = 'white';
   gameCtx.lineWidth = 4;
@@ -74,58 +69,45 @@ function drawDebugInfo() {
     gameCtx.fillStyle = 'white';
     gameCtx.font = '16px Arial';
     gameCtx.textAlign = 'center';
-    gameCtx.fillText(`Shape: ${square.name}, Level: ${currentLevel}`, gameCanvas.width / 2, 570);
+    gameCtx.fillText(`Shape: ${shapeManager.shape.name}, Level: ${currentLevel}`, gameCanvas.width / 2, 570);
   }
 }
 
-// Function to start game
 function startGame() {
-  // Cancel any existing animation frame to prevent overlap
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
-
   gameActive = true;
-  score = 0; // Reset score
-  console.log('Score reset to:', score); // Debug log
+  score = 0;
+  console.log('Score reset to:', score);
   currentLevel = 1;
   gameTime = 0;
-  lastTime = 0; // Reset lastTime for accurate deltaTime
-  square.reset();
+  lastTime = 0;
+  shapeManager.reset();
   createEndButton();
-
   scoreboardCanvas.style.display = 'block';
-  drawScore(); // Immediate score update
-
-  // Start the game loop
+  drawScore();
   animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// Function to handle game over
 function endGame() {
   gameActive = false;
-
-  // Cancel the animation frame to stop the game loop
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
-
   console.log('Game Over! Final Score:', score);
   if (score > personalBest) {
     personalBest = score;
     localStorage.setItem('personalBest', personalBest);
   }
-  
   const endButton = document.getElementById('endGameButton');
   if (endButton) document.body.removeChild(endButton);
-  
   scoreboardCanvas.style.display = 'none';
   createGameOverPopup();
 }
 
-// New function to create the game over popup
 function createGameOverPopup() {
   const popup = document.createElement('div');
   popup.id = 'gameOverPopup';
@@ -140,16 +122,13 @@ function createGameOverPopup() {
     text-align: center;
     z-index: 12;
   `;
-
   const scoreDisplay = document.createElement('p');
   scoreDisplay.textContent = `Your Score: ${score.toFixed(2)}`;
   scoreDisplay.style.color = 'white';
   scoreDisplay.style.fontSize = '24px';
   popup.appendChild(scoreDisplay);
-
   const buttonContainer = document.createElement('div');
   buttonContainer.style.cssText = 'display: flex; justify-content: center; gap: 10px;';
-
   const restartButton = document.createElement('button');
   restartButton.textContent = 'Restart Game';
   restartButton.style.cssText = 'font-size: 16px; padding: 10px;';
@@ -158,7 +137,6 @@ function createGameOverPopup() {
     startGame();
   });
   buttonContainer.appendChild(restartButton);
-
   const shareButton = document.createElement('button');
   shareButton.textContent = 'Share Score';
   shareButton.style.cssText = 'font-size: 16px; padding: 10px;';
@@ -170,9 +148,7 @@ function createGameOverPopup() {
     });
   });
   buttonContainer.appendChild(shareButton);
-
   popup.appendChild(buttonContainer);
-
   const continueWithAdButton = document.createElement('button');
   continueWithAdButton.textContent = 'Watch Ad to Continue';
   continueWithAdButton.style.cssText = 'font-size: 16px; padding: 10px; margin-top: 10px; display: block; width: 100%;';
@@ -181,75 +157,57 @@ function createGameOverPopup() {
     console.log('Watch ad functionality not yet implemented');
   });
   popup.appendChild(continueWithAdButton);
-
   document.body.appendChild(popup);
 }
 
-// Game loop
 function gameLoop(timestamp) {
-  if (!gameActive) return; // Exit if game isn’t active
-
+  if (!gameActive) return;
   if (lastTime === 0) {
     lastTime = timestamp;
     animationFrameId = requestAnimationFrame(gameLoop);
     return;
   }
-
   let deltaTime = timestamp - lastTime;
   lastTime = timestamp;
-
   if (gameTime === 0) gameTime = timestamp / 1000;
-
   gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
   drawPlayArea();
   drawScore();
   drawDebugInfo();
-
   score += (scoreIncreaseRate * deltaTime / 1000);
-
-  square.update(deltaTime, currentLevel);
-  square.draw(gameCtx);
-
-  if (square.checkBoundary(playAreaX, playAreaY, playAreaSize)) {
+  shapeManager.update(deltaTime, currentLevel);
+  shapeManager.draw();
+  if (shapeManager.checkBoundary(playAreaX, playAreaY, playAreaSize)) {
     endGame();
     return;
   }
-
-  // Modified level transition logic:
+  // Level transition logic:
   if ((timestamp / 1000 - gameTime) >= levelDurations[currentLevel - 1]) {
     if (currentLevel < 3) {
       currentLevel++;
       gameTime = timestamp / 1000;
     } else {
-      // For level 3, keep the game running indefinitely by resetting gameTime.
       gameTime = timestamp / 1000;
     }
   }
-
-  if (square.isSequenceCompleted()) {
+  if (shapeManager.shape.isSequenceCompleted && shapeManager.shape.isSequenceCompleted()) {
     score += 50;
-    square.resetSequence(currentLevel);
+    shapeManager.shape.resetSequence(currentLevel);
   }
-
   animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// Event listener for player interaction
 gameCanvas.addEventListener('click', handleClick);
-
 function handleClick(event) {
   if (!gameActive) return;
-  
   const rect = gameCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-
-  if (square.handleClick(x, y)) {
+  if (shapeManager.handleClick(x, y)) {
     score += 10;
   }
 }
 
-// Function to create and handle the start game button
 function createStartButton() {
   const startButton = document.createElement('button');
   startButton.textContent = 'Start Game';
@@ -261,7 +219,6 @@ function createStartButton() {
   document.body.appendChild(startButton);
 }
 
-// Function to create and handle the end game button
 function createEndButton() {
   const endButton = document.createElement('button');
   endButton.id = 'endGameButton';
@@ -271,7 +228,6 @@ function createEndButton() {
   document.body.appendChild(endButton);
 }
 
-// Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   scoreboardCanvas.style.display = 'none';
   createStartButton();
