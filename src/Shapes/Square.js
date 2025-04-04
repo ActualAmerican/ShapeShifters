@@ -1,3 +1,4 @@
+// Square.js
 import { Shape } from './Shape.js';
 
 // Helper functions for color adjustment.
