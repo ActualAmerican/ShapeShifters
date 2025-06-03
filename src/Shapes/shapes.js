@@ -11,15 +11,20 @@ export const shapeRegistry = [
     name: 'Square',
     active: false,  // Toggle this on/off for development
     classRef: Square
+    //Development Status: Complete 
   },
   {
     name: 'Kite',
-    active: false,  // Toggle this on/off for development
+    active: true,  // Toggle this on/off for development
     classRef: Kite
+    //Development Status: Complete
+
   },
   {
     name: 'Arrow',
-    active: true,  // Toggle this on/off for development
+    active: false,  // Toggle this on/off for development
     classRef: Arrow
+    //Development Status: In Progress
+
   },
 ];
