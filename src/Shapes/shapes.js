@@ -2,6 +2,9 @@
 import { Square } from './Square.js';
 import { Kite } from './Kite.js';
 import { Arrow } from './Arrow.js';
+import { Circle } from './Circle.js';
+import { Heart } from './Heart.js';
+
 // Import other shapes when ready:
 // import { Pentagon } from './Pentagon.js';
 // etc.
@@ -9,22 +12,27 @@ import { Arrow } from './Arrow.js';
 export const shapeRegistry = [
   {
     name: 'Square',
-    active: false,  // Toggle this on/off for development
+    active: false, // Development Status: Complete
     classRef: Square
-    //Development Status: Complete 
+  },
+  {
+    name: 'Heart',
+    active: true, // Development Status: In Progress 
+    classRef: Heart
   },
   {
     name: 'Kite',
-    active: true,  // Toggle this on/off for development
+    active: false, // Development Status: Complete
     classRef: Kite
-    //Development Status: Complete
-
+  },
+  {
+    name: 'Circle',
+    active: false, // Development Status: Complete
+    classRef: Circle
   },
   {
     name: 'Arrow',
-    active: false,  // Toggle this on/off for development
+    active: false, // Development Status: In Progress
     classRef: Arrow
-    //Development Status: In Progress
-
-  },
+  }
 ];

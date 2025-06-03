@@ -86,15 +86,22 @@ class Lotus {
  * Arrow shape – moves forward, tap to rotate, avoid Lotus obstacles.
  */
 export class Arrow {
-  constructor(x, y, size, color, name) {
-    this.initialX = x;
-    this.initialY = y;
-    this.x = x;
-    this.y = y;
+  constructor(_x, _y, size, _ignoredColor, name = 'Arrow') {
+    const paX = window.playAreaX ?? 100;
+    const paY = window.playAreaY ?? 0;
+    const paSize = window.playAreaSize ?? 600;
+    const centerX = paX + paSize / 2;
+    const centerY = paY + paSize / 2;
+
+    // Shift left by size so arrow’s origin (tail) is centered
+    this.initialX = centerX - size;
+    this.initialY = centerY;
+    this.x = this.initialX;
+    this.y = this.initialY;
     this.size = size;
 
     this.color = '#FF91A4';
-    this.name  = 'Arrow';
+    this.name  = name;
 
     this.angle       = 0;
     this.targetAngle = 0;
@@ -106,15 +113,37 @@ export class Arrow {
     this.lotusObstacles     = [];
     this.lotusSpawnTimer    = 0;
     this.lotusSpawnInterval = 2000;
+
+    // Intro + perimeter glint logic
+    this.currentLevel = 1;
+    this.playIntro    = true;
+    this.introTimer   = 0;
+    this.introDuration = 2500;  // total intro length
+    this.fadeInTime    = 1200;  // fade-in period
+    this.glintTime     = 1800;  // start of glint
   }
 
   update(deltaTime, level) {
-    // speed scaling
+    // If level changed, reset and play intro again
+    if (level !== this.currentLevel) {
+      this.resetSequence(level);
+    }
+
+    // During intro, advance timer and skip normal update
+    if (this.playIntro) {
+      this.introTimer += deltaTime;
+      if (this.introTimer >= this.introDuration) {
+        this.playIntro = false;
+      }
+      return;
+    }
+
+    // Speed scaling by level
     if (level === 2)      this.speed = this.baseSpeed * 1.5;
     else if (level === 3) this.speed = this.baseSpeed * 2;
     else                  this.speed = this.baseSpeed;
 
-    // smooth rotation
+    // Smooth rotation toward targetAngle
     let angleDiff = this.targetAngle - this.angle;
     angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI)) - Math.PI;
     const maxRotation = this.angularSpeed * deltaTime;
@@ -124,12 +153,12 @@ export class Arrow {
       this.angle += Math.sign(angleDiff) * maxRotation;
     }
 
-    // move forward
+    // Move forward
     const distance = this.speed * deltaTime;
     this.x += Math.cos(this.angle) * distance;
     this.y += Math.sin(this.angle) * distance;
 
-    // spawn Lotus
+    // Spawn Lotus obstacles
     this.lotusSpawnTimer += deltaTime;
     if (this.lotusSpawnTimer >= this.lotusSpawnInterval) {
       this.lotusSpawnTimer = 0;
@@ -141,7 +170,7 @@ export class Arrow {
       this.lotusObstacles.push(new Lotus(spawnX, spawnY, 50));
     }
 
-    // update & cull Lotus
+    // Update and cull Lotus obstacles
     for (let i = this.lotusObstacles.length - 1; i >= 0; i--) {
       const lot = this.lotusObstacles[i];
       lot.update(deltaTime, level);
@@ -161,8 +190,11 @@ export class Arrow {
     ctx.rect(paX, paY, paSize, paSize);
     ctx.clip();
 
-    // draw arrow
+    // Draw arrow with fade-in and perimeter glint during intro
     ctx.save();
+    if (this.playIntro) {
+      ctx.globalAlpha = Math.min(1, this.introTimer / this.fadeInTime);
+    }
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
     ctx.fillStyle = this.color;
@@ -172,6 +204,7 @@ export class Arrow {
     const arrowHeight   = effectiveSize * 0.3;
     const headWidth     = effectiveSize * 0.7;
 
+    // Local points defining the arrow polygon
     const localPoints = [
       { x: 0,            y: -arrowHeight / 2 },
       { x: bodyLength,   y: -arrowHeight / 2 },
@@ -182,6 +215,7 @@ export class Arrow {
       { x: 0,            y: arrowHeight / 2 }
     ];
 
+    // Draw the filled arrow
     ctx.beginPath();
     ctx.moveTo(localPoints[0].x, localPoints[0].y);
     for (let i = 1; i < localPoints.length; i++) {
@@ -189,9 +223,47 @@ export class Arrow {
     }
     ctx.closePath();
     ctx.fill();
+
+    // Perimeter glint: moving highlight along arrow edges
+    if (
+      this.playIntro &&
+      this.introTimer >= this.glintTime &&
+      this.introTimer < this.glintTime + 400
+    ) {
+      // Calculate total perimeter
+      let perim = 0;
+      for (let i = 0; i < localPoints.length; i++) {
+        const p1 = localPoints[i];
+        const p2 = localPoints[(i + 1) % localPoints.length];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        perim += Math.hypot(dx, dy);
+      }
+      // Highlight length = 15% of perimeter
+      const highlightLen = perim * 0.15;
+      const offset = perim * ((this.introTimer - this.glintTime) / 400);
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(255,255,255,0.65)";
+      ctx.setLineDash([highlightLen, perim]);
+      ctx.lineDashOffset = -offset;
+
+      // Stroke the outline
+      ctx.beginPath();
+      ctx.moveTo(localPoints[0].x, localPoints[0].y);
+      for (let i = 1; i < localPoints.length; i++) {
+        ctx.lineTo(localPoints[i].x, localPoints[i].y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Reset dash
+      ctx.setLineDash([]);
+    }
+
     ctx.restore();
 
-    // draw Lotus obstacles
+    // Draw Lotus obstacles
     for (let lot of this.lotusObstacles) {
       lot.draw(ctx);
     }
@@ -239,12 +311,31 @@ export class Arrow {
   }
 
   reset() {
+    // Center arrow each level, shifted left by size
+    const paX = window.playAreaX ?? 100;
+    const paY = window.playAreaY ?? 0;
+    const paSize = window.playAreaSize ?? 600;
+    const centerX = paX + paSize / 2;
+    const centerY = paY + paSize / 2;
+    this.initialX = centerX - this.size;
+    this.initialY = centerY;
     this.x = this.initialX;
     this.y = this.initialY;
+
     this.angle = 0;
     this.targetAngle = 0;
     this.speed = this.baseSpeed;
     this.lotusObstacles = [];
     this.lotusSpawnTimer = 0;
+
+    // Reset intro for new level
+    this.playIntro = true;
+    this.introTimer = 0;
+  }
+
+  // Called by ShapeManager when level changes
+  resetSequence(level) {
+    this.currentLevel = level;
+    this.reset();
   }
 }

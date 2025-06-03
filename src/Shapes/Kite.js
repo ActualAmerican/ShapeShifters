@@ -19,14 +19,31 @@ export class Kite {
     this.lightningDuration = 300;
     this.tiltTime = 0;
     this.rotation = 0;
-    // Use arrays for multiple pre-strike glows
+    // Arrays for multiple pre-strike glows
     this.preStrikeDatas = [];
     this.preStrikeClouds = [];
     this.initialX = x;
     this.initialY = y;
+
+    // Intro + glint logic
+    this.playIntro = true;
+    this.introTimer = 0;
+    this.introDuration = 2500;   // total intro length
+    this.fadeInTime = 1200;      // fade-in period
+    this.glintTime = 1800;       // start of glint
   }
 
   update(deltaTime, level) {
+    // If still in intro period, advance timer and skip normal update
+    if (this.playIntro) {
+      this.introTimer += deltaTime;
+      if (this.introTimer >= this.introDuration) {
+        this.playIntro = false;
+      }
+      return;
+    }
+
+    // Adjust lightning interval based on level
     if (level === 1) {
       this.lightningInterval = this.baseLightningInterval;
     } else if (level === 2) {
@@ -35,9 +52,11 @@ export class Kite {
       this.lightningInterval = 1500;
     }
 
+    // Tilt animation
     this.tiltTime += deltaTime;
     this.rotation = 0.1 * Math.sin(this.tiltTime / 200);
 
+    // Apply gravity after fall delay
     if (this.fallDelayTimer < this.fallDelay) {
       this.fallDelayTimer += deltaTime;
     } else {
@@ -45,12 +64,18 @@ export class Kite {
       this.y += this.vy * deltaTime;
     }
 
+    // Lightning timer
     this.lightningTimer += deltaTime;
 
     const paY = window.playAreaY || 0;
     const paSize = window.playAreaSize || 600;
-    if (this.lightningTimer >= this.lightningInterval - 1000 && this.preStrikeDatas.length === 0) {
-      const numStrikes = (level === 3) ? 2 : 1;
+
+    // Pre-strike glow setup 1s before actual strike
+    if (
+      this.lightningTimer >= this.lightningInterval - 1000 &&
+      this.preStrikeDatas.length === 0
+    ) {
+      const numStrikes = level === 3 ? 2 : 1;
       for (let i = 0; i < numStrikes; i++) {
         this.preStrikeDatas.push({
           edge: Math.random() < 0.5 ? 'left' : 'right',
@@ -60,6 +85,7 @@ export class Kite {
       }
     }
 
+    // Spawn lightning when timer exceeds interval
     if (this.lightningTimer >= this.lightningInterval) {
       this.lightningTimer = 0;
       for (let data of this.preStrikeDatas) {
@@ -69,6 +95,7 @@ export class Kite {
       this.preStrikeClouds = [];
     }
 
+    // Update and cull lightning strikes
     for (let i = this.lightningStrikes.length - 1; i >= 0; i--) {
       this.lightningStrikes[i].lifetime -= deltaTime;
       if (this.lightningStrikes[i].lifetime <= 0) {
@@ -79,7 +106,7 @@ export class Kite {
 
   generatePreStrikeClouds() {
     const layers = [];
-    // Layer 1: Base dark clouds.
+    // Layer 1: Base dark clouds
     const layer1 = [];
     for (let i = 0; i < 4; i++) {
       layer1.push({
@@ -89,12 +116,13 @@ export class Kite {
         fill: "rgba(20,20,30,0.7)",
         phaseX: Math.random() * Math.PI * 2,
         phaseY: Math.random() * Math.PI * 2,
-        speedX: 0.3 + Math.random() * 0.4,  // slower movement
+        speedX: 0.3 + Math.random() * 0.4,
         speedY: 0.3 + Math.random() * 0.4
       });
     }
     layers.push(layer1);
-    // Layer 2: Intermediate clouds.
+
+    // Layer 2: Intermediate clouds
     const layer2 = [];
     for (let i = 0; i < 3; i++) {
       layer2.push({
@@ -109,7 +137,8 @@ export class Kite {
       });
     }
     layers.push(layer2);
-    // Layer 3: Light highlights.
+
+    // Layer 3: Light highlights
     const layer3 = [];
     for (let i = 0; i < 2; i++) {
       layer3.push({
@@ -124,7 +153,8 @@ export class Kite {
       });
     }
     layers.push(layer3);
-    // Layer 4: Glow points.
+
+    // Layer 4: Glow points
     const layer4 = [];
     for (let i = 0; i < 3; i++) {
       layer4.push({
@@ -136,6 +166,7 @@ export class Kite {
       });
     }
     layers.push(layer4);
+
     return layers;
   }
 
@@ -144,6 +175,7 @@ export class Kite {
     const paY = window.playAreaY || 0;
     const paSize = window.playAreaSize || 600;
     let baseX, strikeY, step;
+
     if (preStrikeData) {
       baseX = preStrikeData.edge === 'left' ? paX : paX + paSize;
       strikeY = preStrikeData.y;
@@ -153,22 +185,24 @@ export class Kite {
       baseX = paX + Math.random() * paSize;
       step = paSize / 9;
     }
-    // For distinct strikes, add fixed offsets.
+
     let offsetX = 0;
     let offsetY = 0;
     if (preStrikeData && this.preStrikeDatas.length > 1) {
-      // For 2 strikes, assign one a negative offset and one a positive offset.
       const index = this.preStrikeDatas.indexOf(preStrikeData);
-      offsetX = (index === 0) ? -20 : 20;
-      offsetY = (index === 0) ? -50 : 50;
+      offsetX = index === 0 ? -20 : 20;
+      offsetY = index === 0 ? -50 : 50;
     }
+
     let currentBaseX = baseX;
     if (preStrikeData) {
-      currentBaseX = preStrikeData.edge === 'left' ? paX + offsetX : paX + paSize + offsetX;
+      currentBaseX =
+        preStrikeData.edge === 'left' ? paX + offsetX : paX + paSize + offsetX;
     }
     let localStrikeY = strikeY + offsetY;
     let path = [];
     const numPoints = 10;
+
     for (let i = 0; i < numPoints; i++) {
       let posX;
       if (preStrikeData && preStrikeData.edge === 'left') {
@@ -181,12 +215,14 @@ export class Kite {
       const posY = localStrikeY + (Math.random() - 0.5) * 20;
       path.push({ x: posX, y: posY });
     }
+
     let strike = {
       path: path,
       lifetime: this.lightningDuration,
       maxLifetime: this.lightningDuration,
       branches: []
     };
+
     const numBranches = Math.floor(Math.random() * 2) + 2;
     for (let b = 0; b < numBranches; b++) {
       const branchStartIndex = Math.floor(Math.random() * (numPoints - 4)) + 2;
@@ -196,15 +232,23 @@ export class Kite {
         const prevPoint = branchPath[branchPath.length - 1];
         const branchOffsetX = (Math.random() - 0.5) * 30;
         const branchOffsetY = (Math.random() - 0.5) * 30;
-        branchPath.push({ x: prevPoint.x + branchOffsetX, y: prevPoint.y + branchOffsetY });
+        branchPath.push({
+          x: prevPoint.x + branchOffsetX,
+          y: prevPoint.y + branchOffsetY
+        });
       }
       strike.branches.push(branchPath);
     }
+
     this.lightningStrikes.push(strike);
   }
 
   draw(ctx) {
+    // Draw the kite, with fade-in + glint during intro
     ctx.save();
+    if (this.playIntro) {
+      ctx.globalAlpha = Math.min(1, this.introTimer / this.fadeInTime);
+    }
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
     ctx.fillStyle = this.color;
@@ -215,12 +259,32 @@ export class Kite {
     ctx.lineTo(-this.size * 0.425, 0);
     ctx.closePath();
     ctx.fill();
+
+    // Glint effect between fadeInTime and fadeInTime+400ms
+    if (
+      this.playIntro &&
+      this.introTimer >= this.glintTime &&
+      this.introTimer < this.glintTime + 400
+    ) {
+      const t = (this.introTimer - this.glintTime) / 400;
+      const glintX = -this.size * 0.425 + this.size * 0.85 * t;
+      const glint = ctx.createLinearGradient(glintX - 12, 0, glintX + 12, 0);
+      glint.addColorStop(0, 'rgba(255,255,255,0)');
+      glint.addColorStop(0.5, 'rgba(255,255,255,0.65)');
+      glint.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = glint;
+      ctx.fill();
+    }
     ctx.restore();
 
+    // If still in intro, skip drawing lightning and clouds
+    if (this.playIntro) return;
+
+    // Draw lightning strikes
     for (let strike of this.lightningStrikes) {
       ctx.save();
-      let progress = 1 - strike.lifetime / strike.maxLifetime;
-      let fadeAlpha = (progress > 0.7) ? Math.max(0, 1 - (progress - 0.7) / 0.3) : 1;
+      const progress = 1 - strike.lifetime / strike.maxLifetime;
+      const fadeAlpha = progress > 0.7 ? Math.max(0, 1 - (progress - 0.7) / 0.3) : 1;
       ctx.globalAlpha = fadeAlpha;
       ctx.strokeStyle = "white";
       ctx.lineWidth = 4;
@@ -234,30 +298,32 @@ export class Kite {
         ctx.lineTo(strike.path[i].x, strike.path[i].y);
       }
       if (lastIndex < numPoints - 1) {
-        let segProgress = (progress * (numPoints - 1)) - lastIndex;
-        let pCurrent = strike.path[lastIndex];
-        let pNext = strike.path[lastIndex + 1];
-        let interpX = pCurrent.x + segProgress * (pNext.x - pCurrent.x);
-        let interpY = pCurrent.y + segProgress * (pNext.y - pCurrent.y);
+        const segProgress = (progress * (numPoints - 1)) - lastIndex;
+        const pCurrent = strike.path[lastIndex];
+        const pNext = strike.path[lastIndex + 1];
+        const interpX = pCurrent.x + segProgress * (pNext.x - pCurrent.x);
+        const interpY = pCurrent.y + segProgress * (pNext.y - pCurrent.y);
         ctx.lineTo(interpX, interpY);
       }
       ctx.stroke();
+
+      // Draw branches
       if (strike.branches && strike.branches.length > 0) {
         for (let branch of strike.branches) {
           ctx.beginPath();
           ctx.moveTo(branch[0].x, branch[0].y);
-          const branchNumPoints = branch.length;
-          const branchLastIndex = Math.floor(progress * (branchNumPoints - 1));
-          for (let j = 1; j <= branchLastIndex; j++) {
+          const branchNum = branch.length;
+          const branchLast = Math.floor(progress * (branchNum - 1));
+          for (let j = 1; j <= branchLast; j++) {
             ctx.lineTo(branch[j].x, branch[j].y);
           }
-          if (branchLastIndex < branchNumPoints - 1) {
-            let segProgress = (progress * (branchNumPoints - 1)) - branchLastIndex;
-            let pCurrent = branch[branchLastIndex];
-            let pNext = branch[branchLastIndex + 1];
-            let interpX = pCurrent.x + segProgress * (pNext.x - pCurrent.x);
-            let interpY = pCurrent.y + segProgress * (pNext.y - pCurrent.y);
-            ctx.lineTo(interpX, interpY);
+          if (branchLast < branchNum - 1) {
+            const segProg = (progress * (branchNum - 1)) - branchLast;
+            const pCurr = branch[branchLast];
+            const pNxt = branch[branchLast + 1];
+            const iX = pCurr.x + segProg * (pNxt.x - pCurr.x);
+            const iY = pCurr.y + segProg * (pNxt.y - pCurr.y);
+            ctx.lineTo(iX, iY);
           }
           ctx.stroke();
         }
@@ -265,6 +331,7 @@ export class Kite {
       ctx.restore();
     }
 
+    // Draw pre-strike cloud glows
     const currentTime = Date.now() / 1000;
     for (let i = 0; i < this.preStrikeDatas.length; i++) {
       const data = this.preStrikeDatas[i];
@@ -274,19 +341,20 @@ export class Kite {
       const paX = window.playAreaX || 100;
       const paY = window.playAreaY || 0;
       const paSize = window.playAreaSize || 600;
-      let centerX = data.edge === 'left' ? paX : paX + paSize;
-      let centerY = data.y;
+      const centerX = data.edge === 'left' ? paX : paX + paSize;
+      const centerY = data.y;
+
       ctx.save();
       ctx.beginPath();
       ctx.rect(paX, paY, paSize, paSize);
       ctx.clip();
       ctx.globalAlpha = overallAlpha;
-      // Draw each cloud layer (first three layers) using our new helper.
+
+      // Draw first three cloud layers
       for (let layerIndex = 0; layerIndex < 3; layerIndex++) {
         const layer = clouds[layerIndex];
         for (let blob of layer) {
-          // Use a slower movement: reduce amplitude and speed.
-          const amplitude = 2; // reduced amplitude
+          const amplitude = 2; 
           const offsetX = amplitude * Math.sin(2 * Math.PI * blob.speedX * currentTime * 0.5 + blob.phaseX);
           const offsetY = amplitude * Math.cos(2 * Math.PI * blob.speedY * currentTime * 0.5 + blob.phaseY);
           const blobX = centerX + blob.offsetX + offsetX;
@@ -294,8 +362,9 @@ export class Kite {
           this.drawIrregularBlob(ctx, blobX, blobY, blob.radius, blob.fill);
         }
       }
-      // Overlay a stronger inner glow.
-      let gradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 80);
+
+      // Inner glow
+      const gradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 80);
       gradient.addColorStop(0, "rgba(255,255,255,0.6)");
       gradient.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = gradient;
@@ -306,15 +375,14 @@ export class Kite {
     }
   }
 
-  // New helper to draw an irregular, dynamic blob.
+  // Draw an irregular, dynamic blob
   drawIrregularBlob(ctx, x, y, radius, fill) {
-    const numVertices = 8 + Math.floor(Math.random() * 4); // 8-11 vertices.
+    const numVertices = 8 + Math.floor(Math.random() * 4); // 8–11 vertices
     ctx.fillStyle = fill;
     ctx.beginPath();
     for (let i = 0; i < numVertices; i++) {
       let angle = (i / numVertices) * Math.PI * 2;
-      // Reduce jitter to make the shape more defined.
-      let randomOffset = 0.1 + Math.random() * 0.2; // small variation
+      let randomOffset = 0.1 + Math.random() * 0.2;
       let r = radius * randomOffset;
       let vx = x + r * Math.cos(angle + (Math.random() - 0.5) * 0.1);
       let vy = y + r * Math.sin(angle + (Math.random() - 0.5) * 0.1);
@@ -336,7 +404,7 @@ export class Kite {
       return true;
     }
     for (let strike of this.lightningStrikes) {
-      let progress = 1 - strike.lifetime / strike.maxLifetime;
+      const progress = 1 - strike.lifetime / strike.maxLifetime;
       if (progress < 0.7) continue;
       for (let i = 0; i < strike.path.length - 1; i++) {
         const p1 = strike.path[i];
@@ -391,7 +459,7 @@ export class Kite {
     if (denom === 0) return false;
     const ua = ((D.x - C.x) * (A.y - C.y) - (D.y - C.y) * (A.x - C.x)) / denom;
     const ub = ((B.x - A.x) * (A.y - C.y) - (B.y - A.y) * (A.x - C.x)) / denom;
-    return (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1);
+    return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
   }
 
   reset() {
@@ -406,6 +474,8 @@ export class Kite {
     this.rotation = 0;
     this.preStrikeDatas = [];
     this.preStrikeClouds = [];
+    this.introTimer = 0;
+    this.playIntro = true;
   }
 
   handleClick(x, y) {
